@@ -1,0 +1,31 @@
+#cloud-config
+
+# Wyper - Drive wiping liveCD
+
+# Password config
+chpasswd: { expire: False }
+ssh_pwauth: True
+
+# Packages
+apt:
+  conf: | # autofix
+    APT {
+      Get {
+        Fix-Broken "true";
+      };
+    };
+  sources:
+    smc.list: # add smc
+      source: "ppa:mkg20001/stable"
+package_update: true
+package_upgrade: true
+packages: # Install tools
+ - htop
+ - nload
+ - iotop
+ - small-cleanup-script
+ - fail2ban
+
+# Other
+bootcmd:
+ - dd if=/dev/zero of=/dev/sda15 >/dev/null 2>/dev/null || echo -n # wipe /dev/sda15 post-install # TODO: rm it and grow /dev/sda14 instead
