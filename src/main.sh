@@ -58,7 +58,7 @@ echo
 echo "Loading..."
 
 log() {
-  echo "[-]: $*" > "$LOG"
+  echo "[$(date +%H:%M:%S)]: $*" >> "$LOG"
 }
 
 detect_root_location() {
@@ -70,8 +70,6 @@ detect_root_location() {
 }
 
 render() {
-  clear
-
   banner
 
   MIN=$(tput cols)
@@ -81,6 +79,10 @@ render() {
   fi
 
   center "Disks:"
+
+  echo
+
+  render_diskstates
 
   echo
 
@@ -97,6 +99,32 @@ render_logs() {
   done
 }
 
+render_diskstates() {
+  MIN=$(( $MIN - 4 ))
+
+  center "<index>: <Name> (<Size>)"
+  MIN=$(( $MIN - 8 ))
+  center "Wiped at -"
+  center "Healthy"
+  MIN=$(( $MIN + 8 ))
+  echo
+
+  MIN=$(( $MIN + 4 ))
+}
+
+render_loop() {
+  while true; do
+    RENDERED=$(render)
+    clear
+    echo "$RENDERED"
+
+    sleep 1s
+  done
+}
+
+echo > "$LOG"
+
+log "Launching..."
 detect_root_location
 
-render
+render_loop
