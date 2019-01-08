@@ -19,6 +19,7 @@ TMP="/tmp/wyper"
 
 mkdir -p "$STORAGE"
 mkdir -p "$TMP"
+echo "Loading..." > "$TMP/menu"
 
 LOG="$TMP/out.log"
 
@@ -190,6 +191,10 @@ render() {
   tail -n 10 "$LOG" | render_logs
 
   echo
+
+  cat "$TMP/menu" | render_menu
+
+  echo
 }
 
 render_logs() {
@@ -237,14 +242,45 @@ render_loop() {
 bg_loop() {
   while true; do
     detect_disks
-    sleep 10s
+    sleep 1s
   done
 }
 
-control_loop() {
+render_menu() {
+  args=()
+  while read line; do
+    args+=("$line")
+  done
+
+  _render_menu "${args[@]}"
+}
+
+_render_menu() {
+  MIN=50
+
+  center "$1"
+  shift
+
+  MIN=$(( $MIN - 4 ))
+  while [ ! -z "$1" ]; do
+    center "($1) $2"
+    shift
+    shift
+  done
+}
+
+control_read() {
   while read -sn1 char; do
     log "Char $char"
   done
+}
+
+control_main() {
+  echo -e "Wyper v0.1.0\nc\nconfiguration\nw\nwipe and check health\nh\nhealth check\nj\nJBOD-configuration\ne\nexit" > "$TMP/menu"
+}
+
+control_loop() {
+  control_main
 }
 
 echo > "$LOG"
