@@ -26,6 +26,22 @@ mkdir -p "$STATE"
 
 LOG="$TMP/out.log"
 
+DB="$STORAGE/.db"
+if [ ! -e "$DB" ]; then
+  touch "$DB"
+fi
+
+_db() { # GET <key> SET <key> <value>
+  if [ -z "$2" ]; then
+    cat "$DB" | grep "^$1=" | sed "s|$1=||g" || /bin/true
+  else
+    newdb=$(cat "$DB" | grep -v "^$1=" || /bin/true)
+    newdb="$newdb
+$1=$2"
+    echo "$newdb" > "$DB"
+  fi
+}
+
 center() { # <string> [<min-size>]
   if [ ! -z "$2" ]; then
     MIN="$2"
