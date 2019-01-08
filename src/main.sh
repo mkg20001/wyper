@@ -87,14 +87,20 @@ mkdir -p "$STATE"
 detect_disks() {
   log "Detecting disks..."
 
-  DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
+  DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor,hctl | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
   DEVS=$(echo "$DEVS_J" | jq -r ".name")
-  log "Found disk(s): $DEVS"
+  log "Found disk(s): $(echo $DEVS)"
   DEVS_ARRAY=($DEVS)
 
   for dev in $DEVS; do
     DEV_STATE="$STATE/$dev"
-    add_routine
+    DEV_J=$(echo "$DEVS_J" | jq -sr '.[] | select(.name == "'"$dev"'")')
+    if [ -e "$DEV_STATE" ] && [ "$(gen_dev_uuid)" != "$(cat $DEV_STATE/uuid)" ]; then
+      rm_routine
+    fi
+    if [ ! -e "$DEV_STATE" ]; then
+      add_routine
+    fi
   done
 
   for DEV_STATE in "$STATE"/*; do
@@ -106,14 +112,16 @@ detect_disks() {
   # DEV_NAME_LIST=$(echo "$DEVS_J" | jq -sr '.[] | .vendor + " " + .model + " " + .serial + " (" + .size + ")"')
 }
 
+gen_dev_uuid() {
+  echo "$DEV_J" | jq -c '[.vendor, .model, .serial, .rev, .size, .hctl]' | sha256sum | fold -w 64 | head -n 1
+}
+
 add_routine() {
   log "Generating metadata for new device $dev..."
 
   mkdir -p "$DEV_STATE"
-  DEV_J=$(echo "$DEVS_J" | jq -sr '.[] | select(.name == "'"$dev"'")')
-  mkdir -p "$DEV_STATE"
-  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ")"' | sed "s|  | |g" | sed "s|  | |g" | sed "s|  | |g" > "$DEV_STATE/display"
-  cat "$DEV_STATE/display" | sha256sum | fold -w 64 | head -n 1 > "$DEV_STATE/tmpid"
+  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ")"' | sed -r "s|  +| |g" | sed -r "s|^ *||g" > "$DEV_STATE/display"
+  gen_dev_uuid > "$DEV_STATE/uuid"
   get_free_id > "$DEV_STATE/id"
 
   log "Added as $(cat $DEV_STATE/id)!"
@@ -211,10 +219,10 @@ render_diskstates() {
   for DEV_STATE in "$STATE"/*; do
     dev=$(basename "$DEV_STATE")
     center "$(cat $DEV_STATE/id): $(cat $DEV_STATE/display)"
-    MIN=$(( $MIN - 8 ))
+    MIN=$(( $MIN - 16 ))
     center "Wiped at -"
     center "Healthy"
-    MIN=$(( $MIN + 8 ))
+    MIN=$(( $MIN + 16 ))
     echo
   done
 
