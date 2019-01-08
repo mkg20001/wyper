@@ -2,6 +2,9 @@
 
 # pkgs: jq parted lsblk
 
+set -e
+shopt -s nullglob
+
 if [ $(id -u) -gt 0 ]; then
   echo "ERROR: Must be run as root" >&2
   exit 2
@@ -87,11 +90,18 @@ detect_disks() {
   DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
   DEVS=$(echo "$DEVS_J" | jq -r ".name")
   log "Found disk(s): $DEVS"
-  DEVS_=($DEVS)
+  DEVS_ARRAY=($DEVS)
 
   for dev in $DEVS; do
     DEV_STATE="$STATE/$dev"
     add_routine
+  done
+
+  for DEV_STATE in "$STATE"/*; do
+    dev=$(basename "$DEV_STATE")
+    if ! contains "$dev" "${DEVS_ARRAY[@]}"; then
+      rm_routine
+    fi
   done
   # DEV_NAME_LIST=$(echo "$DEVS_J" | jq -sr '.[] | .vendor + " " + .model + " " + .serial + " (" + .size + ")"')
 }
@@ -102,11 +112,18 @@ add_routine() {
   mkdir -p "$DEV_STATE"
   DEV_J=$(echo "$DEVS_J" | jq -sr '.[] | select(.name == "'"$dev"'")')
   mkdir -p "$DEV_STATE"
-  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " " + .rev + " (" + .size + ")"' > "$DEV_STATE/display"
+  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ")"' | sed "s|  | |g" | sed "s|  | |g" | sed "s|  | |g" > "$DEV_STATE/display"
   cat "$DEV_STATE/display" | sha256sum | fold -w 64 | head -n 1 > "$DEV_STATE/tmpid"
   get_free_id > "$DEV_STATE/id"
 
   log "Added as $(cat $DEV_STATE/id)!"
+}
+
+rm_routine() {
+  log "Removing metadata for obsolete device $dev..."
+  kill -s SIGKILL "$(cat $DEV_STATE/task 2> /dev/null || /bin/true)" 2> /dev/null || /bin/true # kill obsolete task
+  rm -rf "$DEV_STATE"
+  log "Removed"
 }
 
 get_free_id() {
