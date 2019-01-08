@@ -48,7 +48,7 @@ add_routine() {
   log "Generating metadata for new device $dev..."
 
   mkdir -p "$DEV_STATE"
-  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ")"' | sed -r "s|  +| |g" | sed -r "s|^ *||g" > "$DEV_STATE/display"
+  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ", /dev/" + .name + ")"' | sed -r "s|  +| |g" | sed -r "s|^ *||g" > "$DEV_STATE/display"
   gen_dev_uuid > "$DEV_STATE/uuid"
   get_free_id > "$DEV_STATE/id"
 

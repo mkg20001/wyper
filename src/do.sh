@@ -52,5 +52,6 @@ do_act_wipe_confirmed() {
 }
 
 do_act_update() {
+  echo "Updating..." > "$TMP/menu"
   git pull
 }
