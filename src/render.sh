@@ -62,7 +62,7 @@ render_menu() {
 }
 
 _render_menu() {
-  MIN=50
+  MIN=64
 
   center "$1"
   shift

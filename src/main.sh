@@ -113,4 +113,4 @@ echo > "$LOG"
 log "Launching..."
 detect_root_location
 
-control_loop < /dev/stdin | bg_loop >> "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C
+control_loop < /dev/stdin >> "$LOG" 2>&1 | bg_loop >> "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C
