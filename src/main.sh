@@ -85,11 +85,11 @@ get_from_list() {
 STATE="$TMP/.state"
 mkdir -p "$STATE"
 detect_disks() {
-  log "Detecting disks..."
+  # log "Detecting disks..."
 
   DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor,hctl | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
   DEVS=$(echo "$DEVS_J" | jq -r ".name")
-  log "Found disk(s): $(echo $DEVS)"
+  # log "Found disk(s): $(echo $DEVS)"
   DEVS_ARRAY=($DEVS)
 
   for dev in $DEVS; do
@@ -186,14 +186,8 @@ render() {
   fi
 
   center "Disks:"
-
   echo
-
   render_diskstates
-
-  echo
-
-  center ""
 
   tail -n 10 "$LOG" | render_logs
 
@@ -208,13 +202,6 @@ render_logs() {
 
 render_diskstates() {
   MIN=$(( $MIN - 4 ))
-
-  #center "<index>: <Name> (<Size>)"
-  #MIN=$(( $MIN - 8 ))
-  #center "Wiped at -"
-  #center "Healthy"
-  #MIN=$(( $MIN + 8 ))
-  #echo
 
   for DEV_STATE in "$STATE"/*; do
     dev=$(basename "$DEV_STATE")
@@ -257,4 +244,4 @@ echo > "$LOG"
 log "Launching..."
 detect_root_location
 
-control_loop < /dev/stdin | bg_loop > "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C
+control_loop < /dev/stdin | bg_loop >> "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C
