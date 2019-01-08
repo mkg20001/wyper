@@ -103,26 +103,10 @@ contains () {
   return 1
 }
 
-do_disk_wipe() {
-  DEV="$1"
-  DEV_NAME="$2"
-
-  log "Wiping $DEV with 000000 (1/3)..."
-  dd if=/dev/null "of=$DEV"
-  log "Wiping $DEV with 111111 (2/3)..."
-  dd if=/dev/null "of=$DEV" # TODO: use 0xffff
-  log "Wiping $DEV with random (3/3)..."
-  dd if=/dev/null "of=$DEV" # TODO: use random (but make it fast)
-
-  log "Creating msdos partition table on $DEV..."
-  yes | parted "$DEV" mktable msdos
-
-  log "Wiping completed for $DEV!"
-}
-
 . render.sh
 . bg.sh
 . control.sh
+. do.sh
 
 echo > "$LOG"
 
