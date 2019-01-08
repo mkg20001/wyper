@@ -7,8 +7,12 @@ if [ $(id -u) -gt 0 ]; then
   exit 2
 fi
 
+ID_LIST="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+ID_SPACE_ARRAY=$(echo "$ID_LIST" | sed -r "s|(.)|\1 |g")
+ID_ARRAY=($ID_SPACE_ARRAY)
+
 STORAGE="/var/lib/wyper"
-TMP="/tmp/wiper"
+TMP="/tmp/wyper"
 
 mkdir -p "$STORAGE"
 mkdir -p "$TMP"
@@ -75,30 +79,59 @@ get_from_list() {
   head -n "$1" | tail -n 1
 }
 
+STATE="$TMP/.state"
+mkdir -p "$STATE"
 detect_disks() {
-  DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,vendor | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
+  log "Detecting disks..."
+
+  DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
   DEVS=$(echo "$DEVS_J" | jq -r ".name")
-  DEVS=($DEVS)
-  DEV_NAME_LIST=$(echo "$DEVS_J" | jq -sr '.[] | .vendor + " " + .model + " " + .serial + " (" + .size + ")"')
+  log "Found disk(s): $DEVS"
+  DEVS_=($DEVS)
+
+  for dev in $DEVS; do
+    DEV_STATE="$STATE/$dev"
+    add_routine
+  done
+  # DEV_NAME_LIST=$(echo "$DEVS_J" | jq -sr '.[] | .vendor + " " + .model + " " + .serial + " (" + .size + ")"')
+}
+
+add_routine() {
+  log "Generating metadata for new device $dev..."
+
+  mkdir -p "$DEV_STATE"
+  DEV_J=$(echo "$DEVS_J" | jq -sr '.[] | select(.name == "'"$dev"'")')
+  mkdir -p "$DEV_STATE"
+  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " " + .rev + " (" + .size + ")"' > "$DEV_STATE/display"
+  cat "$DEV_STATE/display" | sha256sum | fold -w 64 | head -n 1 > "$DEV_STATE/tmpid"
+  get_free_id > "$DEV_STATE/id"
+
+  log "Added as $(cat $DEV_STATE/id)!"
+}
+
+get_free_id() {
+  ids=$(cat "$STATE"/*/id)
+  for freeid in "${ID_ARRAY[@]}"; do
+    if ! contains "$freeid" $ids; then
+      echo "$freeid"
+      return 0
+    fi
+  done
+
+  log "ERROR: We're out of ids! You really managed to get ${#ID_LIST} drives plugged into this thing?! Report that as an issue!"
 }
 
 contains () {
-  local e match="$1"
+  needle="$1"
   shift
-  for e; do [[ "$e" == "$match" ]] && return 0; done
+  while [ ! -z "$1" ]; do
+    if [ "$1" == "$needle" ]; then
+      return 0
+    fi
+    shift
+  done
+
   return 1
-}
-
-MAP="$TMP/.map"
-mkdir -p "$MAP"
-name_to_index() {
-  :
-}
-
-name_to_index_sync() {
-#  for dev in $DEVS; do
-#    for dev_index in $(ls "$MAP"); do
-  :
 }
 
 do_disk_wipe() {
@@ -151,12 +184,22 @@ render_logs() {
 render_diskstates() {
   MIN=$(( $MIN - 4 ))
 
-  center "<index>: <Name> (<Size>)"
-  MIN=$(( $MIN - 8 ))
-  center "Wiped at -"
-  center "Healthy"
-  MIN=$(( $MIN + 8 ))
-  echo
+  #center "<index>: <Name> (<Size>)"
+  #MIN=$(( $MIN - 8 ))
+  #center "Wiped at -"
+  #center "Healthy"
+  #MIN=$(( $MIN + 8 ))
+  #echo
+
+  for DEV_STATE in "$STATE"/*; do
+    dev=$(basename "$DEV_STATE")
+    center "$(cat $DEV_STATE/id): $(cat $DEV_STATE/display)"
+    MIN=$(( $MIN - 8 ))
+    center "Wiped at -"
+    center "Healthy"
+    MIN=$(( $MIN + 8 ))
+    echo
+  done
 
   MIN=$(( $MIN + 4 ))
 }
@@ -167,7 +210,20 @@ render_loop() {
     clear
     echo "$RENDERED"
 
-    sleep 1s
+    sleep .1s
+  done
+}
+
+bg_loop() {
+  while true; do
+    detect_disks
+    sleep 10s
+  done
+}
+
+control_loop() {
+  while read -sn1 char; do
+    log "Char $char"
   done
 }
 
@@ -176,4 +232,4 @@ echo > "$LOG"
 log "Launching..."
 detect_root_location
 
-render_loop
+control_loop < /dev/stdin | bg_loop > "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C
