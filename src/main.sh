@@ -185,8 +185,6 @@ render() {
     MIN=$(( $MIN - 4 ))
   fi
 
-  center "Disks:"
-  echo
   render_diskstates
 
   tail -n 10 "$LOG" | render_logs
@@ -201,19 +199,29 @@ render_logs() {
 }
 
 render_diskstates() {
-  MIN=$(( $MIN - 4 ))
-
-  for DEV_STATE in "$STATE"/*; do
-    dev=$(basename "$DEV_STATE")
-    center "$(cat $DEV_STATE/id): $(cat $DEV_STATE/display)"
-    MIN=$(( $MIN - 16 ))
-    center "Wiped at -"
-    center "Healthy"
-    MIN=$(( $MIN + 16 ))
+  if [ "$(ls -A $STATE)" ]; then
+    center "Disks:"
     echo
-  done
 
-  MIN=$(( $MIN + 4 ))
+    MIN=$(( $MIN - 4 ))
+
+    for DEV_STATE in "$STATE"/*; do
+      dev=$(basename "$DEV_STATE")
+      center "$(cat $DEV_STATE/id): $(cat $DEV_STATE/display)"
+      MIN=$(( $MIN - 16 ))
+      center "Wiped at -"
+      center "Healthy"
+      MIN=$(( $MIN + 16 ))
+      echo
+    done
+
+    MIN=$(( $MIN + 4 ))
+  else
+    _MIN="$MIN"
+    MIN=
+    center "<No disks detected. Please attach some>"
+    MIN="$_MIN"
+  fi
 }
 
 render_loop() {
