@@ -50,3 +50,7 @@ test_task() {
 do_act_wipe_confirmed() {
   scheudle_task "$DEV_NAME" test_task
 }
+
+do_act_update() {
+  git pull
+}

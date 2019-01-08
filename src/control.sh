@@ -76,6 +76,7 @@ act_config() {
   c_act k "keyboard layout" act_keyboard
   c_act h "disable health check alongside wipe: $(get_toggle_display disable_health_auto)" do_toggle disable_health_auto act_config
   c_act a "toggle automatic wiping: $(get_toggle_display auto_wipe)" do_toggle auto_wipe act_config
+  c_act u "update" do_act_update
   c_act - "go back" act_main
   control_read
 }
