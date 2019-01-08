@@ -21,6 +21,9 @@ mkdir -p "$STORAGE"
 mkdir -p "$TMP"
 echo "Loading..." > "$TMP/menu"
 
+STATE="$TMP/.state"
+mkdir -p "$STATE"
+
 LOG="$TMP/out.log"
 
 center() { # <string> [<min-size>]
@@ -71,82 +74,6 @@ log() {
   echo "[$(date +%H:%M:%S)]: $*" >> "$LOG"
 }
 
-detect_root_location() {
-  ROOT_MNT=$(awk -v needle="/" '$2==needle {print $1}' /proc/mounts)
-  ROOT_DEV_NAME=$(lsblk -no pkname "$ROOT_MNT")
-  ROOT_DEV="/dev/$ROOT_DEV_NAME"
-
-  log "System is mounted at $ROOT_MNT which is part of $ROOT_DEV, ignoring that disk"
-}
-
-get_from_list() {
-  head -n "$1" | tail -n 1
-}
-
-STATE="$TMP/.state"
-mkdir -p "$STATE"
-detect_disks() {
-  # log "Detecting disks..."
-
-  DEVS_J=$(lsblk -Jo name,rm,size,ro,type,mountpoint,hotplug,label,uuid,model,serial,rev,vendor,hctl | jq '.blockdevices[] | select(.type == "disk" and .name != "'"$ROOT_DEV_NAME"'")')
-  DEVS=$(echo "$DEVS_J" | jq -r ".name")
-  # log "Found disk(s): $(echo $DEVS)"
-  DEVS_ARRAY=($DEVS)
-
-  for dev in $DEVS; do
-    DEV_STATE="$STATE/$dev"
-    DEV_J=$(echo "$DEVS_J" | jq -sr '.[] | select(.name == "'"$dev"'")')
-    if [ -e "$DEV_STATE" ] && [ "$(gen_dev_uuid)" != "$(cat $DEV_STATE/uuid)" ]; then
-      rm_routine
-    fi
-    if [ ! -e "$DEV_STATE" ]; then
-      add_routine
-    fi
-  done
-
-  for DEV_STATE in "$STATE"/*; do
-    dev=$(basename "$DEV_STATE")
-    if ! contains "$dev" "${DEVS_ARRAY[@]}"; then
-      rm_routine
-    fi
-  done
-  # DEV_NAME_LIST=$(echo "$DEVS_J" | jq -sr '.[] | .vendor + " " + .model + " " + .serial + " (" + .size + ")"')
-}
-
-gen_dev_uuid() {
-  echo "$DEV_J" | jq -c '[.vendor, .model, .serial, .rev, .size, .hctl]' | sha256sum | fold -w 64 | head -n 1
-}
-
-add_routine() {
-  log "Generating metadata for new device $dev..."
-
-  mkdir -p "$DEV_STATE"
-  echo "$DEV_J" | jq -r '.vendor + " " + .model + " " + .serial + " rev " + .rev + " (" + .size + ")"' | sed -r "s|  +| |g" | sed -r "s|^ *||g" > "$DEV_STATE/display"
-  gen_dev_uuid > "$DEV_STATE/uuid"
-  get_free_id > "$DEV_STATE/id"
-
-  log "Added as $(cat $DEV_STATE/id)!"
-}
-
-rm_routine() {
-  log "Removing metadata for obsolete device $dev..."
-  kill -s SIGKILL "$(cat $DEV_STATE/task 2> /dev/null || /bin/true)" 2> /dev/null || /bin/true # kill obsolete task
-  rm -rf "$DEV_STATE"
-  log "Removed"
-}
-
-get_free_id() {
-  ids=$(cat "$STATE"/*/id)
-  for freeid in "${ID_ARRAY[@]}"; do
-    if ! contains "$freeid" $ids; then
-      echo "$freeid"
-      return 0
-    fi
-  done
-
-  log "ERROR: We're out of ids! You really managed to get ${#ID_LIST} drives plugged into this thing?! Report that as an issue!"
-}
-
 contains () {
   needle="$1"
   shift
@@ -177,111 +104,9 @@ do_disk_wipe() {
   log "Wiping completed for $DEV!"
 }
 
-render() {
-  banner
-
-  MIN=$(tput cols)
-
-  if [ $MIN -gt 50 ]; then
-    MIN=$(( $MIN - 4 ))
-  fi
-
-  render_diskstates
-
-  tail -n 10 "$LOG" | render_logs
-
-  echo
-
-  cat "$TMP/menu" | render_menu
-
-  echo
-}
-
-render_logs() {
-  while read line; do
-    center "$line"
-  done
-}
-
-render_diskstates() {
-  if [ "$(ls -A $STATE)" ]; then
-    center "Disks:"
-    echo
-
-    MIN=$(( $MIN - 4 ))
-
-    for DEV_STATE in "$STATE"/*; do
-      dev=$(basename "$DEV_STATE")
-      center "$(cat $DEV_STATE/id): $(cat $DEV_STATE/display)"
-      MIN=$(( $MIN - 16 ))
-      center "Wiped at -"
-      center "Healthy"
-      MIN=$(( $MIN + 16 ))
-      echo
-    done
-
-    MIN=$(( $MIN + 4 ))
-  else
-    _MIN="$MIN"
-    MIN=
-    center "<No disks detected. Please attach some>"
-    MIN="$_MIN"
-  fi
-}
-
-render_loop() {
-  while true; do
-    RENDERED=$(render)
-    clear
-    echo "$RENDERED"
-
-    sleep .1s
-  done
-}
-
-bg_loop() {
-  while true; do
-    detect_disks
-    sleep 1s
-  done
-}
-
-render_menu() {
-  args=()
-  while read line; do
-    args+=("$line")
-  done
-
-  _render_menu "${args[@]}"
-}
-
-_render_menu() {
-  MIN=50
-
-  center "$1"
-  shift
-
-  MIN=$(( $MIN - 4 ))
-  while [ ! -z "$1" ]; do
-    center "($1) $2"
-    shift
-    shift
-  done
-}
-
-control_read() {
-  while read -sn1 char; do
-    log "Char $char"
-  done
-}
-
-control_main() {
-  echo -e "Wyper v0.1.0\nc\nconfiguration\nw\nwipe and check health\nh\nhealth check\nj\nJBOD-configuration\ne\nexit" > "$TMP/menu"
-}
-
-control_loop() {
-  control_main
-}
+. render.sh
+. bg.sh
+. control.sh
 
 echo > "$LOG"
 
