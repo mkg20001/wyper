@@ -1,7 +1,11 @@
 #!/bin/bash
 
 render() {
-  banner
+  if ! get_toggle hide_banner; then
+    banner
+  else
+    echo
+  fi
 
   MIN=$(tput cols)
 
@@ -11,7 +15,9 @@ render() {
 
   render_diskstates
 
-  tail -n 10 "$LOG" | render_logs
+  if ! get_toggle hide_logs; then
+    tail -n 10 "$LOG" | render_logs
+  fi
 
   echo
 
