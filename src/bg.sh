@@ -27,7 +27,9 @@ detect_disks() {
       rm_routine
     fi
     if [ ! -e "$DEV_STATE" ]; then
-      add_routine
+      if ! [[ "$dev" == "fd"* ]]; then # ignore floppy
+        add_routine
+      fi
     else
       check_task
     fi
