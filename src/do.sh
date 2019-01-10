@@ -1,13 +1,11 @@
 #!/bin/bash
 
-T_NOGRACE=false
-
 check_task() {
   TASK="$STATE/$dev/task"
   if [ -e "$TASK" ]; then
     PID=$(cat "$TASK")
     if [ ! -e "/proc/$PID" ]; then
-      if $T_NOGRACE; then
+      if [ ! -z "$T_NOGRACE" ]; then
         log "ERROR: Task $PID crashed for device $dev"
       else
         log "Task $PID finished for device $dev at $(LC_ALL=C date)"
@@ -18,8 +16,7 @@ check_task() {
 }
 
 scheudle_task() {
-  T_NOGRACE=true check_task
-  T_NOGRACE=false
+  T_NOGRACE=1 check_task
 
   if [ -e "$STATE/$dev/task" ]; then
     log "ERROR: Cannot execute task for $dev as one is already running"
