@@ -27,7 +27,7 @@ scheudle_task() {
   dev="$1"
   shift
   "$@" & pid=$!
-  echo "$dev/$pid" > "$STATE/$dev/task"
+  echo "$pid" > "$STATE/$dev/task"
 }
 
 dd_with_progress() {
