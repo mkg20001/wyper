@@ -40,7 +40,7 @@ $CURPROG" > "$STATE/$dev/task.progress"
 }
 
 do_disk_wipe() {
-  echo "Starting wipe..." > "$STATE/$DEV_NAME/task.progress"
+  echo -e "Starting wipe...\n" > "$STATE/$DEV_NAME/task.progress"
 
   slog "Wiping $DEV with 000000 (1/3)..."
   cat /dev/zero | dd_with_progress
