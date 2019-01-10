@@ -40,9 +40,6 @@ $CUR_LOG" > "$STATE/$dev/task.progress"
 }
 
 do_disk_wipe() {
-  DEV="$1"
-  DEV_NAME="$2"
-
   echo "Starting wipe..." > "$STATE/$DEV_NAME/task.progress"
 
   slog "Wiping $DEV with 000000 (1/3)..."
@@ -83,7 +80,7 @@ test_task() {
 
 do_act_wipe_confirmed() {
   dev="$DEV"
-  scheudle_task "$DEV_NAME" do_disk_wipe "$DEV" "$DEV_NAME"
+  scheudle_task "$DEV_NAME" do_disk_wipe
 }
 
 do_act_update() {
