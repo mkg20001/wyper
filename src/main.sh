@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# pkgs: jq parted lsblk
+# pkgs: jq parted lsblk progress
 
 set -e
 shopt -s nullglob
@@ -18,12 +18,8 @@ STORAGE="/var/lib/wyper"
 TMP="/tmp/wyper"
 
 mkdir -p "$STORAGE"
-mkdir -p "$TMP"
-echo "Loading..." > "$TMP/menu"
 
 STATE="$TMP/.state"
-mkdir -p "$STATE"
-
 LOG="$TMP/out.log"
 
 DB="$STORAGE/.db"
@@ -85,6 +81,14 @@ banner() {
 banner
 echo
 echo "Loading..."
+
+if [ ! -e "$TMP" ]; then
+  mkdir "$TMP"
+  mount /dev/null -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=1777,size=2M "$TMP"
+fi
+
+mkdir -p "$STATE"
+echo "Loading..." > "$TMP/menu"
 
 log() {
   echo "[$(date +%H:%M:%S)]: $*" >> "$LOG"
