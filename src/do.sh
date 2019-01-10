@@ -19,6 +19,7 @@ check_task() {
 
 scheudle_task() {
   T_NOGRACE=true check_task
+  T_NOGRACE=false
 
   if [ -e "$STATE/$dev/task" ]; then
     log "ERROR: Cannot execute task for $dev as one is already running"
