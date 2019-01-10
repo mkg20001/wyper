@@ -90,6 +90,11 @@ log() {
   echo "[$(date +%H:%M:%S)]: $*" >> "$LOG"
 }
 
+slog() {
+  CUR_LOG="$*"
+  log "$@"
+}
+
 contains () {
   needle="$1"
   shift
