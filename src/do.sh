@@ -34,8 +34,8 @@ dd_with_progress() {
   dd if=/dev/stdin "of=$DEV" & ddpid=$!
   while [ -e "/proc/$ddpid" ]; do
     CURPROG=$(progress -wp "$ddpid" | head -n 2 | tail -n 1)
-    echo "$CURPROG
-$CUR_LOG" > "$STATE/$dev/task.progress"
+    echo "$CUR_LOG
+$CURPROG" > "$STATE/$dev/task.progress"
   done
 }
 
@@ -62,6 +62,8 @@ do_disk_wipe() {
 do_act_wipe() {
   DEVID="$1"
   DEV_NAME="$2"
+  dev="/dev/$DEV_NAME"
+  DEV="$dev"
 
   if [ "$DEVID" == "." ]; then
     control_reset "wipe everything"

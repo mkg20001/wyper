@@ -28,6 +28,8 @@ detect_disks() {
     fi
     if [ ! -e "$DEV_STATE" ]; then
       add_routine
+    else
+      check_task
     fi
   done
 
