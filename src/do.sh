@@ -47,8 +47,8 @@ do_disk_wipe() {
   slog "Wiping $DEV with 111111 (2/3)..."
   dd if=/dev/zero count=1024 bs=1024 | tr '\000' '\377' | dd_with_progress
   slog "Wiping $DEV with random (3/3)..."
-  # RAND=$(dd if=/dev/urandom bs=$(( 1024 * 1024 )) count=1 | base64 -d)
-  # yes "" | tr -d "\n" | dd_with_progress
+  RAND=$(dd if=/dev/urandom bs=1024 count=1 | base64)
+  yes "$RAND" | tr -d "\n" | dd_with_progress
 
   log "Creating msdos partition table on $DEV..."
   yes | parted "$DEV" mktable msdos
