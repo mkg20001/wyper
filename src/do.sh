@@ -82,7 +82,8 @@ test_task() {
 }
 
 do_act_wipe_confirmed() {
-  scheudle_task "$DEV_NAME" do_disk_wipe
+  dev="$DEV"
+  scheudle_task "$DEV_NAME" do_disk_wipe "$DEV" "$DEV_NAME"
 }
 
 do_act_update() {
