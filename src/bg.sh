@@ -100,9 +100,11 @@ bg_loop() {
 
     if get_toggle auto_wipe; then
       LAST_DISK_CHANGE_DIFF=$(( $(date +%s) - $LAST_DISK_CHANGE ))
-      if [ $LAST_DISK_CHANGE_DIFF -gt 10 ] && $ALLOW_AWIPE_TRIGGER; then
-        do_disk_all_wipe
-        ALLOW_AWIPE_TRIGGER=false
+      if [ $LAST_DISK_CHANGE_DIFF -gt 10 ]; then
+        if $ALLOW_AWIPE_TRIGGER; then
+          do_disk_all_wipe
+          ALLOW_AWIPE_TRIGGER=false
+        fi
       elif [ $LAST_DISK_CHANGE_DIFF -lt 10 ]; then
         log "Triggering auto-wipe in $(( 10 - $LAST_DISK_CHANGE_DIFF )) second(s)"
         ALLOW_AWIPE_TRIGGER=true
