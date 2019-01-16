@@ -108,7 +108,7 @@ render_loop() {
 
     posY=$(echo "$RENDERED" | wc -l)
 
-    needclear=$(( $(tput lines) - $posY ))
+    needclear=$(( $(tput lines) - $posY - 1 ))
 
     {
       for i in $(seq 1 $needclear); do
