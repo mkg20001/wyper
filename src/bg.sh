@@ -87,6 +87,9 @@ get_free_id() {
 ALLOW_AWIPE_TRIGGER=false
 
 bg_loop() {
+  detect_disks
+  LAST_DISK_CHANGE=0
+
   while true; do
     detect_disks
 
