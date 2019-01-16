@@ -84,6 +84,8 @@ get_free_id() {
   log "ERROR: We're out of ids! You really managed to get ${#ID_LIST} drives plugged into this thing?! Report that as an issue!"
 }
 
+ALLOW_AWIPE_TRIGGER=false
+
 bg_loop() {
   while true; do
     detect_disks
@@ -98,10 +100,12 @@ bg_loop() {
 
     if get_toggle auto_wipe; then
       LAST_DISK_CHANGE_DIFF=$(( $(date +%s) - $LAST_DISK_CHANGE ))
-      if [ $LAST_DISK_CHANGE_DIFF -gt 10 ]; then
+      if [ $LAST_DISK_CHANGE_DIFF -gt 10 ] && $ALLOW_AWIPE_TRIGGER; then
         do_disk_all_wipe
+        ALLOW_AWIPE_TRIGGER=false
       else
-        log "Triggering auto-wipe in $LAST_DISK_CHANGE_DIFF second(s)"
+        log "Triggering auto-wipe in $(( 10 - $LAST_DISK_CHANGE_DIFF )) second(s)"
+        ALLOW_AWIPE_TRIGGER=true
       fi
     fi
 
