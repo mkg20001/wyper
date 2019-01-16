@@ -106,6 +106,17 @@ render_loop() {
 
     echo "$RENDERED" | sed "s|^|$LSPACE$(printf "\r")|g"
 
+    posY=$(echo "$RENDERED" | wc -l)
+
+    needclear=$(( $(tput lines) - $posY ))
+
+    {
+      for i in $(seq 1 $needclear); do
+        echo
+      done
+    } | sed "s|^|$LSPACE$(printf "\r")|g"
+    echo -n "$LSPACE"
+    printf "\r"
     sleep .1s
   done
 }
