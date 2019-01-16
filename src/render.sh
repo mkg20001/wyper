@@ -97,10 +97,14 @@ _render_menu() {
 }
 
 render_loop() {
+  clear
+
   while true; do
     RENDERED=$(render)
-    clear
-    echo "$RENDERED"
+    tput cup 0 0
+    LSPACE=$(printf ' %.0s' $(seq 1 $(tput cols)))
+
+    echo "$RENDERED" | sed "s|^|$LSPACE$(printf "\r")|g"
 
     sleep .1s
   done
