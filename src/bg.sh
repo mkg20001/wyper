@@ -87,23 +87,24 @@ get_free_id() {
 bg_loop() {
   while true; do
     detect_disks
+
+    tasks=$(echo "$STATE/"*"/task")
+    if [ -z "$tasks" ] && get_toggle auto_shutdown; then
+      _db auto_shutdown F
+      log "Shutting down..."
+      shutdown -h now
+      exit
+    fi
+
+    if get_toggle auto_wipe; then
+      LAST_DISK_CHANGE_DIFF=$(( $(date +%s) - $LAST_DISK_CHANGE ))
+      if [ $LAST_DISK_CHANGE_DIFF -gt 10 ]; then
+        do_disk_all_wipe
+      else
+        log "Triggering auto-wipe in $LAST_DISK_CHANGE_DIFF second(s)"
+      fi
+    fi
+
     sleep 1s
   done
-
-  tasks=$(echo "$STATE/"*"/task")
-  if [ -z "$tasks" ] && get_toggle auto_shutdown; then
-    _db auto_shutdown F
-    log "Shutting down..."
-    shutdown -h now
-    exit
-  fi
-
-  if get_toggle auto_wipe; then
-    LAST_DISK_CHANGE_DIFF=$(( $(date +%s) - $LAST_DISK_CHANGE ))
-    if [ $LAST_DISK_CHANGE_DIFF -gt 10 ]; then
-      do_disk_all_wipe
-    else
-      log "Triggering auto-wipe in $LAST_DISK_CHANGE_DIFF second(s)"
-    fi
-  fi
 }
