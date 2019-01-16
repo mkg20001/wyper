@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LAST_DISK_CHANGE=$(date +%s)
+
 detect_root_location() {
   ROOT_MNT=$(awk -v needle="/" '$2==needle {print $1}' /proc/mounts)
   ROOT_DEV_NAME=$(lsblk -no pkname "$ROOT_MNT")
@@ -49,6 +51,8 @@ gen_dev_uuid() {
 }
 
 add_routine() {
+  LAST_DISK_CHANGE=$(date +%s)
+
   log "Generating metadata for new device $dev..."
 
   mkdir -p "$DEV_STATE"
@@ -60,6 +64,8 @@ add_routine() {
 }
 
 rm_routine() {
+  # LAST_DISK_CHANGE=$(date +%s)
+
   log "Removing metadata for obsolete device $dev..."
   kill -s SIGKILL "$(cat $DEV_STATE/task 2> /dev/null || /bin/true)" 2> /dev/null || /bin/true # kill obsolete task
   rm -rf "$DEV_STATE"
@@ -83,4 +89,21 @@ bg_loop() {
     detect_disks
     sleep 1s
   done
+
+  tasks=$(echo "$STATE/"*"/task")
+  if [ -z "$tasks" ] && get_toggle auto_shutdown; then
+    _db auto_shutdown F
+    log "Shutting down..."
+    shutdown -h now
+    exit
+  fi
+
+  if get_toggle auto_wipe; then
+    LAST_DISK_CHANGE_DIFF=$(( $(date +%s) - $LAST_DISK_CHANGE ))
+    if [ $LAST_DISK_CHANGE_DIFF -gt 10 ]; then
+      do_disk_all_wipe
+    else
+      log "Triggering auto-wipe in $LAST_DISK_CHANGE_DIFF second(s)"
+    fi
+  fi
 }

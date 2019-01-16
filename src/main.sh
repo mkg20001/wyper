@@ -20,7 +20,7 @@ TMP="/tmp/wyper"
 mkdir -p "$STORAGE"
 
 STATE="$TMP/.state"
-LOG="$TMP/out.log"
+LOG="/var/log/wyper"
 
 DB="$STORAGE/.db"
 if [ ! -e "$DB" ]; then
@@ -117,9 +117,19 @@ contains () {
 . control.sh
 . do.sh
 
-echo > "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
+echo >> "$LOG"
 
 log "Launching..."
 detect_root_location
+_db auto_wipe F
 
 control_loop < /dev/stdin >> "$LOG" 2>&1 | bg_loop >> "$LOG" 2>&1 | render_loop # this gets piped so everything gets killed on Ctrl+C

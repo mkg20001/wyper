@@ -78,18 +78,24 @@ test_task() {
   log "Task test"
 }
 
+do_disk_all_wipe() {
+  for DEV_STATE in "$STATE/"*; do
+    DEVID=$(cat $DEV_STATE/id)
+    DEV_NAME=$(basename $DEV_STATE)
+    dev="/dev/$DEV_NAME"
+    DEV="$dev"
+
+    if [ ! -e "$DEV_STATE/task" ]; then
+      scheudle_task "$DEV_NAME" do_disk_wipe
+    fi
+  done
+}
+
 do_act_wipe_confirmed() {
   if [ "$DEVID" == "." ]; then
     log "WIPING EVERYTHING"
 
-    for DEV_STATE in "$STATE/"*; do
-      DEVID=$(cat $DEV_STATE/id)
-      DEV_NAME=$(basename $DEV_STATE)
-      dev="/dev/$DEV_NAME"
-      DEV="$dev"
-
-      scheudle_task "$DEV_NAME" do_disk_wipe
-    done
+    do_disk_all_wipe
   else
     dev="$DEV"
     scheudle_task "$DEV_NAME" do_disk_wipe

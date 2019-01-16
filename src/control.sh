@@ -67,7 +67,8 @@ act_main() {
   c_act w "wipe and check health" act_wipe
   c_act h "health check" act_health
   c_act j "JBOD configuration" act_jbod
-  c_act e "exit" act_exit
+  c_act a "automatic shutdown: $(get_toggle_display auto_shutdown)" do_toggle auto_shutdown act_main
+  # c_act e "exit" act_exit
   control_read
 }
 
