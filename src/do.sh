@@ -31,7 +31,7 @@ scheudle_task() {
 dd_with_progress() {
   dd if=/dev/stdin "of=$DEV" & ddpid=$!
   while [ -e "/proc/$ddpid" ]; do
-    CURPROG=$(progress -wp "$ddpid" | head -n 2 | tail -n 1)
+    CURPROG=$(progress -wp "$ddpid" -W 5 | head -n 2 | tail -n 1)
     echo "$CUR_LOG
 $CURPROG" > "$STATE/$dev/task.progress"
   done
