@@ -103,7 +103,7 @@ bg_loop() {
       if [ $LAST_DISK_CHANGE_DIFF -gt 10 ] && $ALLOW_AWIPE_TRIGGER; then
         do_disk_all_wipe
         ALLOW_AWIPE_TRIGGER=false
-      else
+      elif [ $LAST_DISK_CHANGE_DIFF -lt 10 ]; then
         log "Triggering auto-wipe in $(( 10 - $LAST_DISK_CHANGE_DIFF )) second(s)"
         ALLOW_AWIPE_TRIGGER=true
       fi
