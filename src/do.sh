@@ -119,7 +119,7 @@ do_disk_all_wipe() {
     dev="/dev/$DEV_NAME"
     DEV="$dev"
 
-    if [ ! -e "$DEV_STATE/task" ]; then
+    if [ ! -e "$DEV_STATE/task" ] && [ ! -e "$DEV_STATE/wiped_at" ]; then
       scheudle_task "$DEV_NAME" do_disk_wipe
     fi
   done
