@@ -47,6 +47,8 @@ ch_badblocks() {
     CURPROG=$(cat "$BALOG" | fold -w 41 | tail -n 2 | head -n 1 | sed "s|[^0-9a-z/,:% .]||g" | sed "s|^ *||g" | sed "s| *$||g")
     echo "$CUR_LOG ($CURSTATE)
 $CURPROG" > "$STATE/$dev/task.progress"
+
+    sleep 1s
   done
 
   BA_FINAL=$(tail -n 1 "$BALOG.log")
