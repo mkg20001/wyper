@@ -15,9 +15,10 @@ ID_SPACE_ARRAY=$(echo "$ID_LIST" | sed -r "s|(.)|\1 |g")
 ID_ARRAY=($ID_SPACE_ARRAY)
 
 STORAGE="/var/lib/wyper"
+PSTATE="$STORAGE/state"
 TMP="/tmp/wyper"
 
-mkdir -p "$STORAGE"
+mkdir -p "$PSTATE"
 
 STATE="$TMP/.state"
 LOG="/var/log/wyper"
@@ -112,6 +113,7 @@ contains () {
   return 1
 }
 
+. state.sh
 . render.sh
 . bg.sh
 . control.sh

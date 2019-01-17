@@ -88,6 +88,7 @@ ALLOW_AWIPE_TRIGGER=false
 
 bg_loop() {
   detect_disks
+  sync_state
   LAST_DISK_CHANGE=0
 
   while true; do

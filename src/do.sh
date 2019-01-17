@@ -54,6 +54,7 @@ do_disk_wipe() {
   log "Wiping completed for $DEV!"
   LC_ALL=C date > "$STATE/$DEV_NAME/wiped_at"
   dev="$DEV"
+  sync_state
   check_task
 }
 
