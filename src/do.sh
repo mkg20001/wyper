@@ -51,7 +51,7 @@ $CURPROG" > "$STATE/$dev/task.progress"
     sleep 1s
   done
 
-  BA_FINAL=$(tail -n 1 "$BALOG.log")
+  BA_FINAL=$(tail -n 1 "$BALOG")
   if [ ! -s "$TMP/$DEV.badblocks" ]; then
     BA_FINAL="Healthy: $BA_FINAL"
   else
