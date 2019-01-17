@@ -78,7 +78,7 @@ do_disk_wipe() {
   yes "$RAND" | tr -d "\n" | dd_with_progress
 
   log "Creating msdos partition table on $DEV..."
-  yes | parted "$DEV" mktable msdos > /dev/null
+  yes | parted "$DEV" mktable msdos 2> /dev/null
 
   log "Wiping completed for $DEV!"
   LC_ALL=C date > "$STATE/$DEV_NAME/wiped_at"
