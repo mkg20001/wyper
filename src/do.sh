@@ -72,7 +72,7 @@ do_disk_wipe() {
   slog "Wiping $DEV with 000000 (2/4)..."
   cat /dev/zero | dd_with_progress
   slog "Wiping $DEV with 111111 (3/4)..."
-  dd if=/dev/zero count=1024 bs=1024 | tr '\000' '\377' | dd_with_progress
+  dd if=/dev/zero bs=1024 | tr '\000' '\377' | dd_with_progress
   slog "Wiping $DEV with random (4/4)..."
   RAND=$(dd if=/dev/urandom bs=1024 count=1 2>/dev/null | base64)
   yes "$RAND" | tr -d "\n" | dd_with_progress
