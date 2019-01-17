@@ -22,6 +22,7 @@ mkdir -p "$PSTATE"
 
 STATE="$TMP/.state"
 LOG="/var/log/wyper"
+ALOG="/var/log/wyper_audit"
 
 DB="$STORAGE/.db"
 if [ ! -e "$DB" ]; then
@@ -85,7 +86,7 @@ echo "Loading..."
 
 if [ ! -e "$TMP" ]; then
   mkdir "$TMP"
-  mount /dev/null -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=1777,size=2M "$TMP"
+  mount /dev/null -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=1777,size=16M "$TMP"
 fi
 
 mkdir -p "$STATE"
