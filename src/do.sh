@@ -29,7 +29,7 @@ scheudle_task() {
 }
 
 dd_with_progress() {
-  dd if=/dev/stdin "of=$DEV" & ddpid=$!
+  dd if=/dev/stdin "of=$DEV" iflag=fullblock oflag=direct bs=10M & ddpid=$!
   while [ -e "/proc/$ddpid" ]; do
     CURPROG=$(progress -wp "$ddpid" -W 5 | head -n 2 | tail -n 1)
     echo "$CUR_LOG
@@ -45,11 +45,11 @@ do_disk_wipe() {
   slog "Wiping $DEV with 111111 (2/3)..."
   dd if=/dev/zero count=1024 bs=1024 | tr '\000' '\377' | dd_with_progress
   slog "Wiping $DEV with random (3/3)..."
-  RAND=$(dd if=/dev/urandom bs=1024 count=1 | base64)
+  RAND=$(dd if=/dev/urandom bs=1024 count=1 2>/dev/null | base64)
   yes "$RAND" | tr -d "\n" | dd_with_progress
 
   log "Creating msdos partition table on $DEV..."
-  yes | parted "$DEV" mktable msdos
+  yes | parted "$DEV" mktable msdos > /dev/null
 
   log "Wiping completed for $DEV!"
   LC_ALL=C date > "$STATE/$DEV_NAME/wiped_at"
