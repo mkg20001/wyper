@@ -29,7 +29,7 @@ scheudle_task() {
 }
 
 dd_with_progress() {
-  dd if=/dev/stdin "of=$DEV" o=noerror iflag=fullblock oflag=direct bs=16M & ddpid=$!
+  dd if=/dev/stdin "of=$DEV" iflag=fullblock oflag=direct bs=16M & ddpid=$!
   while [ -e "/proc/$ddpid" ]; do
     CURPROG=$(progress -wp "$ddpid" -W 5 | head -n 2 | tail -n 1)
     echo "$CUR_LOG
