@@ -23,10 +23,12 @@ sync_state() {
     done
   done
 
-#  for i in "$PSTATE"/*; do
-#    UUID=$(basename "$i")
-#    if ! contains "$UUID" "${UUIDS[@]}"; then
-#      rm -rf "$i"
-#    fi
-#  done
+  if ! get_toggle keep_state; then
+    for i in "$PSTATE"/*; do
+      UUID=$(basename "$i")
+      if ! contains "$UUID" "${UUIDS[@]}"; then
+        rm -rf "$i"
+      fi
+    done
+  fi
 }

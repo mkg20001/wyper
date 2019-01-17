@@ -64,8 +64,8 @@ $desc"
 act_main() {
   control_reset "Wyper v0.1.0"
   c_act c "configuration" act_config
-  c_act w "wipe and check health" act_wipe
-  c_act h "health check" act_health
+  c_act w "wipe and check for bad blocks" act_wipe
+  # c_act h "health check" act_health
   c_act j "JBOD configuration" act_jbod
   c_act a "automatic shutdown: $(get_toggle_display auto_shutdown)" do_toggle auto_shutdown act_main
   # c_act e "exit" act_exit
@@ -74,8 +74,9 @@ act_main() {
 
 act_config() {
   control_reset "Configuration"
-  c_act k "keyboard layout" act_keyboard
-  c_act h "disable health check alongside wipe: $(get_toggle_display disable_health_auto)" do_toggle disable_health_auto act_config
+  # c_act k "keyboard layout" act_keyboard
+  # c_act h "disable health check alongside wipe: $(get_toggle_display disable_health_auto)" do_toggle disable_health_auto act_config
+  c_act k "keep wipe state forever: $(get_toggle_display keep_state)" do_toggle keep_state act_config
   c_act a "toggle automatic wiping: $(get_toggle_display auto_wipe)" do_toggle auto_wipe act_config
   c_act l "hide logs: $(get_toggle_display hide_logs)" do_toggle hide_logs act_config
   c_act b "hide banner: $(get_toggle_display hide_banner)" do_toggle hide_banner act_config
