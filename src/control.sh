@@ -66,7 +66,6 @@ act_main() {
   c_act c "configuration" act_config
   c_act w "wipe and check for bad blocks" act_wipe
   # c_act h "health check" act_health
-  c_act j "JBOD configuration" act_jbod
   c_act a "automatic shutdown: $(get_toggle_display auto_shutdown)" do_toggle auto_shutdown act_main
   # c_act e "exit" act_exit
   control_read
@@ -105,14 +104,6 @@ act_wipe() {
 
 act_health() {
   _act_list check
-}
-
-act_jbod() {
-  control_reset "JBOD configuration"
-  c_act r "rescan and rebuild" do_jbod_rebuild
-  c_act t "toggle automatic scan & rebuild: $(get_toggle_display jbod_automation)" do_toggle jbod_automation act_jbod
-  c_act - "go back" act_main
-  control_read
 }
 
 act_exit() {
