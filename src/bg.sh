@@ -60,7 +60,7 @@ add_routine() {
   gen_dev_uuid > "$DEV_STATE/uuid"
   get_free_id > "$DEV_STATE/id"
 
-  log "Added as $(cat $DEV_STATE/id)!"
+  log "Added '$(cat $DEV_STATE/display)' as $(cat $DEV_STATE/id)!"
 }
 
 rm_routine() {
