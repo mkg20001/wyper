@@ -68,7 +68,8 @@ render_diskstates() {
   else
     _MIN="$MIN"
     MIN=
-    center "<No disks detected. Please attach some>"
+    center "<no disks detected - please attach some>"
+    echo
     MIN="$_MIN"
   fi
 }

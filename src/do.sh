@@ -44,7 +44,7 @@ ch_badblocks() {
   LC_ALL=C badblocks -w -s -t random -v -o "$BAFILE" "$DEV" >>"$BALOG" 2>>"$BALOG" & bbpid=$!
   while [ -e "/proc/$bbpid" ]; do
     CURSTATE=$(echo $(tail -n 1 "$BALOG" | sed "s|: .*||g"))
-    CURPROG=$(cat "$BALOG" | fold -w 41 | tail -n 2 | head -n 1 | sed "s|[^0-9a-z/,:% .]||g" | sed "s|^ *||g" | sed "s| *$||g")
+    CURPROG=$(cat "$BALOG" | fold -w 41 | tail -n 2 | head -n 1 | sed "s|[^0-9a-z/,:% .]||g" | sed "s|^ *||g" | sed "s| *$||g") # TODO: sometimes output shows as "s 0.0%....error", flip that
     echo "$CUR_LOG ($CURSTATE)
 $CURPROG" > "$STATE/$dev/task.progress"
 
