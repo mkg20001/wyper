@@ -15,7 +15,7 @@ check_task() {
   fi
 }
 
-scheudle_task() {
+schedule_task() {
   T_NOGRACE=1 check_task
 
   if [ -e "$STATE/$dev/task" ]; then
@@ -122,7 +122,7 @@ do_disk_all_wipe() {
     DEV="$dev"
 
     if [ ! -e "$DEV_STATE/task" ] && [ ! -e "$DEV_STATE/wiped_at" ]; then
-      scheudle_task "$DEV_NAME" do_disk_wipe
+      schedule_task "$DEV_NAME" do_disk_wipe
     fi
   done
 }
@@ -134,7 +134,7 @@ do_act_wipe_confirmed() {
     do_disk_all_wipe
   else
     dev="$DEV"
-    scheudle_task "$DEV_NAME" do_disk_wipe
+    schedule_task "$DEV_NAME" do_disk_wipe
   fi
 }
 
