@@ -14,7 +14,7 @@ log() {
 
 log "Installing tools..."
 
-sudo apt-get install \
+sudo apt-get install -y \
     debootstrap \
     squashfs-tools \
     xorriso \
