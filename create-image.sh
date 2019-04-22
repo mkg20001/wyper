@@ -25,11 +25,14 @@ sudo apt-get install \
 TMP=$(mktemp -d)
 log "Creating image in $TMP..."
 sudo mount -t tmpfs -o size=2048m /dev/null $TMP
+mount | grep "$TMP"
 function finish {
-  umount "$TMP"
+  sudo umount "$TMP"
   rm -rf "$TMP"
 }
 trap finish EXIT
+trap finish SIGINT
+trap finish SIGTERM
 
 log "Bootstraping ubuntu base system..."
 sudo debootstrap \
@@ -91,7 +94,7 @@ set default="0"
 set timeout=30
 
 menuentry "Wyper" {
-    linux /vmlinuz boot=live quiet nomodeset
+    linux /vmlinuz boot=live splash nomodeset
     initrd /initrd.img
 }
 EOF
@@ -104,7 +107,7 @@ grub-mkstandalone \
     --locales="" \
     --fonts="" \
     "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
-0
+
 (cd ${TMP}/scratch && \
     dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
     mkfs.vfat efiboot.img && \
