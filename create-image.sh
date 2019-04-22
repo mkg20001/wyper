@@ -40,6 +40,7 @@ sudo git -C "${TMP}/chroot/srv/wyper/" reset --hard HEAD
 
 log "Setting up system..."
 sudo chroot "${TMP}/chroot" bash -ex - << EOF
+export DEBIAN_FRONTEND=noninteractive
 echo "wyper" > /etc/hostname
 echo "deb http://archive.ubuntu.com/ubuntu/ DISTRO main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ DISTRO-updates main restricted universe multiverse
@@ -52,7 +53,7 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git \
-    console-common console-data v86d
+    console-common console-data v86d locales
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
