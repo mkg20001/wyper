@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # from https://willhaley.com/blog/custom-debian-live-environment/
+# and https://wiki.debian.org/Debootstrap
+
+SRC=$(dirname $(readlink -f $0))
+set -ex
 
 sudo apt-get install \
     debootstrap \
@@ -14,46 +18,42 @@ TMP=$(mktemp -d)
 echo "$TMP"
 
 sudo debootstrap \
-    --arch=i386 \
+    --arch=amd64 \
     --variant=minbase \
-    stretch \
-    ${TMP}/chroot \
-    http://ftp.us.debian.org/debian/
+    bionic \
+    "${TMP}/chroot" \
+    http://archive.ubuntu.com/ubuntu/
 
+sudo mkdir -p "${TMP}/chroot/srv/wyper"
+sudo cp -r "$SRC/.git" "${TMP}/chroot/srv/wyper/"
+sudo git -C "${TMP}/chroot/srv/wyper/" reset --hard HEAD
 
-sudo chroot ${TMP}/chroot
-
-## CHROOT
-
-echo "debian-live" > /etc/hostname
-apt-cache search linux-image
-
+sudo chroot "${TMP}/chroot" bash -ex - << EOF
+echo "wyper" > /etc/hostname
+echo "deb http://archive.ubuntu.com/ubuntu/ DISTRO main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ DISTRO-updates main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ DISTRO-backports main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu DISTRO-security main restricted universe multiverse" | \
+  sed "s|DISTRO|\$(cat /etc/lsb-release | grep DISTRIB_CODENAME | sed "s|^DISTRIB_CODENAME=||g")|g" > /etc/apt/sources.list
 apt-get update && \
-apt-get install --no-install-recommends \
-    linux-image-686 \
+apt-get install -y --no-install-recommends \
+    linux-image-generic \
     live-boot \
-    systemd-sysv
-
-apt-get install --no-install-recommends \
-    network-manager net-tools wireless-tools wpagui \
-    curl openssh-client \
-    blackbox xserver-xorg-core xserver-xorg xinit xterm \
-    nano && \
+    systemd-sysv \
+    git
 apt-get clean
-passwd root
-
-## EXCHROOT
-
+cd /srv/wyper && bash prepare_machine.sh
+EOF
 mkdir -p ${TMP}/{scratch,image/live}
 
 sudo mksquashfs \
-    ${TMP}/chroot \
-    ${TMP}/image/live/filesystem.squashfs \
+    "${TMP}/chroot" \
+    "${TMP}/image/live/filesystem.squashfs" \
     -e boot
 
-cp ${TMP}/chroot/boot/vmlinuz-* \
+sudo cp ${TMP}/chroot/boot/vmlinuz-* \
     ${TMP}/image/vmlinuz && \
-cp ${TMP}/chroot/boot/initrd.img-* \
+sudo cp ${TMP}/chroot/boot/initrd.img-* \
     ${TMP}/image/initrd
 
 cat <<'EOF' >${TMP}/scratch/grub.cfg
@@ -65,7 +65,7 @@ insmod all_video
 set default="0"
 set timeout=30
 
-menuentry "Debian Live" {
+menuentry "Wyper" {
     linux /vmlinuz boot=live quiet nomodeset
     initrd /initrd
 }
@@ -103,11 +103,11 @@ cat \
     ${TMP}/scratch/core.img \
 > ${TMP}/scratch/bios.img
 
-xorriso \
+sudo xorriso \
     -as mkisofs \
     -iso-level 3 \
     -full-iso9660-filenames \
-    -volid "DEBIAN_CUSTOM" \
+    -volid "WYPER" \
     -eltorito-boot \
         boot/grub/bios.img \
         -no-emul-boot \
@@ -120,7 +120,7 @@ xorriso \
         -e EFI/efiboot.img \
         -no-emul-boot \
     -append_partition 2 0xef ${TMP}/scratch/efiboot.img \
-    -output "${TMP}/debian-custom.iso" \
+    -output "$SRC/wyper.iso" \
     -graft-points \
         "${TMP}/image" \
         /boot/grub/bios.img=${TMP}/scratch/bios.img \

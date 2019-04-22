@@ -7,7 +7,7 @@ else
   git clone https://github.com/mkg20001/wyper.git
 fi
 
-apt-get install -y jq progress parted
+apt-get install -y jq progress parted smartmontools --no-install-recommends
 
 cd wyper
 
