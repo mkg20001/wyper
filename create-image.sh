@@ -155,6 +155,5 @@ sudo xorriso \
         /EFI/efiboot.img=${TMP}/scratch/efiboot.img
 
 log "Successfully created $SRC/wyper.iso!"
-finish
 
 # Test it using qemu-system-x86_64 -m 1024 wyper.iso
