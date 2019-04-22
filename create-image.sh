@@ -34,7 +34,7 @@ sudo debootstrap \
     http://archive.ubuntu.com/ubuntu/
 
 log "Copying source code..."
-sudo mkdir -p "${TMP}/chroot/srv/wyper"
+sudo mkdir -p "${TMP}/chroot/srv/wyper" "${TMP}/etc/network"
 sudo cp -r "$SRC/.git" "${TMP}/chroot/srv/wyper/"
 sudo git -C "${TMP}/chroot/srv/wyper/" reset --hard HEAD
 
@@ -53,11 +53,10 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git \
-    console-common console-data v86d locales
+    console-common console-data v86d locales plymouth plymouth-themes
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
-echo -e 'ACTIVE_CONSOLES="/dev/tty[1-6]"\nCHARMAP="UTF-8"\nCODESET="Lat15"\nFONTFACE="Terminus"\nFONTSIZE="8x16"\nVIDEOMODE=' > /etc/default/console-setup
 
 apt-get clean
 cd /srv/wyper && bash prepare_machine.sh
