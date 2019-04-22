@@ -38,12 +38,12 @@ log "Bootstraping ubuntu base system..."
 sudo debootstrap \
     --arch=amd64 \
     --variant=minbase \
-    bionic \
+    disco \
     "${TMP}/chroot" \
     http://archive.ubuntu.com/ubuntu/
 
 log "Copying source code..."
-sudo mkdir -p "${TMP}/chroot/srv/wyper" "${TMP}/etc/network"
+sudo mkdir -p "${TMP}/chroot/srv/wyper" "${TMP}/etc/network" "${TMP}/root/etc/network"
 sudo cp -r "$SRC/.git" "${TMP}/chroot/srv/wyper/"
 sudo git -C "${TMP}/chroot/srv/wyper/" reset --hard HEAD
 
