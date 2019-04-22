@@ -4,7 +4,7 @@
 # and https://wiki.debian.org/Debootstrap
 
 SRC=$(dirname $(readlink -f $0))
-set -ex
+set -e
 
 log() {
   echo
@@ -23,7 +23,13 @@ sudo apt-get install \
     mtools
 
 TMP=$(mktemp -d)
-echo "Creating image in $TMP..."
+log "Creating image in $TMP..."
+sudo mount -t tmpfs -o size=2048m /dev/null $TMP
+function finish {
+  umount "$TMP"
+  rm -rf "$TMP"
+}
+trap finish EXIT
 
 log "Bootstraping ubuntu base system..."
 sudo debootstrap \
@@ -53,7 +59,7 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git \
-    console-common console-data v86d locales plymouth plymouth-themes
+    console-data v86d locales plymouth plymouth-themes
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
@@ -98,7 +104,7 @@ grub-mkstandalone \
     --locales="" \
     --fonts="" \
     "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
-
+0
 (cd ${TMP}/scratch && \
     dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
     mkfs.vfat efiboot.img && \
@@ -145,5 +151,6 @@ sudo xorriso \
         /EFI/efiboot.img=${TMP}/scratch/efiboot.img
 
 log "Successfully created $SRC/wyper.iso!"
+finish
 
 # Test it using qemu-system-x86_64 -m 1024 wyper.iso
