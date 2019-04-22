@@ -20,7 +20,8 @@ sudo apt-get install -y \
     xorriso \
     grub-pc-bin \
     grub-efi-amd64-bin \
-    mtools
+    mtools \
+    dosfstools
 
 TMP=$(mktemp -d)
 log "Creating image in $TMP..."
