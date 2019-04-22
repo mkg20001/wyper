@@ -6,6 +6,14 @@
 SRC=$(dirname $(readlink -f $0))
 set -ex
 
+log() {
+  echo
+  echo "*** $*"
+  echo
+}
+
+log "Installing tools..."
+
 sudo apt-get install \
     debootstrap \
     squashfs-tools \
@@ -15,8 +23,9 @@ sudo apt-get install \
     mtools
 
 TMP=$(mktemp -d)
-echo "$TMP"
+echo "Creating image in $TMP..."
 
+log "Bootstraping ubuntu base system..."
 sudo debootstrap \
     --arch=amd64 \
     --variant=minbase \
@@ -24,10 +33,12 @@ sudo debootstrap \
     "${TMP}/chroot" \
     http://archive.ubuntu.com/ubuntu/
 
+log "Copying source code..."
 sudo mkdir -p "${TMP}/chroot/srv/wyper"
 sudo cp -r "$SRC/.git" "${TMP}/chroot/srv/wyper/"
 sudo git -C "${TMP}/chroot/srv/wyper/" reset --hard HEAD
 
+log "Setting up system..."
 sudo chroot "${TMP}/chroot" bash -ex - << EOF
 echo "wyper" > /etc/hostname
 echo "deb http://archive.ubuntu.com/ubuntu/ DISTRO main restricted universe multiverse
@@ -40,21 +51,29 @@ apt-get install -y --no-install-recommends \
     linux-image-generic \
     live-boot \
     systemd-sysv \
-    git
+    git \
+    console-common console-data v86d
+
+locale-gen en_US.UTF-8
+update-locale en_US.UTF-8
+echo -e 'ACTIVE_CONSOLES="/dev/tty[1-6]"\nCHARMAP="UTF-8"\nCODESET="Lat15"\nFONTFACE="Terminus"\nFONTSIZE="8x16"\nVIDEOMODE=' > /etc/default/console-setup
+
 apt-get clean
 cd /srv/wyper && bash prepare_machine.sh
 EOF
-mkdir -p ${TMP}/{scratch,image/live}
 
+log "Packing system..."
+mkdir -p ${TMP}/{scratch,image/live}
 sudo mksquashfs \
     "${TMP}/chroot" \
     "${TMP}/image/live/filesystem.squashfs" \
     -e boot
 
+log "Preparing image..."
 sudo cp ${TMP}/chroot/boot/vmlinuz-* \
     ${TMP}/image/vmlinuz && \
 sudo cp ${TMP}/chroot/boot/initrd.img-* \
-    ${TMP}/image/initrd
+    ${TMP}/image/initrd.img
 
 cat <<'EOF' >${TMP}/scratch/grub.cfg
 
@@ -67,13 +86,11 @@ set timeout=30
 
 menuentry "Wyper" {
     linux /vmlinuz boot=live quiet nomodeset
-    initrd /initrd
+    initrd /initrd.img
 }
 EOF
 
 touch ${TMP}/image/WYPER
-
-## MAKE BOOT
 
 grub-mkstandalone \
     --format=x86_64-efi \
@@ -103,6 +120,7 @@ cat \
     ${TMP}/scratch/core.img \
 > ${TMP}/scratch/bios.img
 
+log "Making iso..."
 sudo xorriso \
     -as mkisofs \
     -iso-level 3 \
@@ -125,3 +143,7 @@ sudo xorriso \
         "${TMP}/image" \
         /boot/grub/bios.img=${TMP}/scratch/bios.img \
         /EFI/efiboot.img=${TMP}/scratch/efiboot.img
+
+log "Successfully created $SRC/wyper.iso!"
+
+# Test it using qemu-system-x86_64 -m 1024 wyper.iso
