@@ -12,3 +12,4 @@ apt-get install -y jq progress parted smartmontools --no-install-recommends
 cd wyper
 
 cp -rvp overlay/* /
+update-initramfs -u
