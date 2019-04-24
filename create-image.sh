@@ -77,6 +77,7 @@ if [ ! -z "$DEBUG" ]; then
   yes | adduser user || /bin/true
   echo 'user:somepw' | chpasswd
   addgroup user sudo
+  sed "s|managed=false|managed=true|g" -i /etc/NetworkManager/NetworkManager.conf
 fi
 
 apt-get clean
