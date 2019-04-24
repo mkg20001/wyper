@@ -3,13 +3,11 @@
 LAST_DISK_CHANGE=$(date +%s)
 
 detect_root_location() {
-  ROOT_MNT=$(awk -v needle="/" '$2==needle {print $1}' /proc/mounts)
-  if [ "$ROOT_MNT" == "overlay" ]; then
-    ROOT_MNT=$(awk -v needle="/run/live/medium" '$2==needle {print $1}' /proc/mounts)
+  if [ -e /run/live/medium ]; then
+    log "Storing settings on drive..."
+  elif [ -e /run/live/medium ] && [ ! -e /run/live/medium/wyper_storage ]; then
+    log "*** LIVE CD DETECTED - NO CHANGES OR LOGS WILL BE SAVED ***"
   fi
-  ROOT_DEV_NAME=$(lsblk -no pkname "$ROOT_MNT")
-  ROOT_DEV="/dev/$ROOT_DEV_NAME"
-
   log "System is mounted at $ROOT_MNT which is part of $ROOT_DEV, ignoring that disk"
 }
 

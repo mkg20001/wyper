@@ -10,19 +10,37 @@ if [ $(id -u) -gt 0 ]; then
   exit 2
 fi
 
+ROOT_MNT=$(awk -v needle="/" '$2==needle {print $1}' /proc/mounts)
+if [ "$ROOT_MNT" == "overlay" ]; then
+  ROOT_MNT=$(awk -v needle="/run/live/medium" '$2==needle {print $1}' /proc/mounts)
+fi
+ROOT_DEV_NAME=$(lsblk -no pkname "$ROOT_MNT")
+ROOT_DEV="/dev/$ROOT_DEV_NAME"
+
+
 ID_LIST="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 ID_SPACE_ARRAY=$(echo "$ID_LIST" | sed -r "s|(.)|\1 |g")
 ID_ARRAY=($ID_SPACE_ARRAY)
 
-STORAGE="/var/lib/wyper"
+
+if [ -e /run/live/medium/wyper_storage ]; then
+  mount "$ROOT_MNT" /run/live/medium -o remount,rw
+  STORAGE="/run/live/medium/wyper_storage"
+  LOG="/run/live/medium/wyper_storage/wyper.log"
+  ALOG="/run/live/medium/wyper_storage/wyper_audit.log"
+else
+  STORAGE="/var/lib/wyper"
+  LOG="/var/log/wyper"
+  ALOG="/var/log/wyper_audit"
+fi
+
+
 PSTATE="$STORAGE/state"
 TMP="/tmp/wyper"
 
 mkdir -p "$PSTATE"
 
 STATE="$TMP/.state"
-LOG="/var/log/wyper"
-ALOG="/var/log/wyper_audit"
 
 DB="$STORAGE/.db"
 if [ ! -e "$DB" ]; then
