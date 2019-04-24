@@ -21,7 +21,8 @@ sudo apt-get install -y \
     grub-pc-bin \
     grub-efi-amd64-bin \
     mtools \
-    dosfstools
+    dosfstools \
+    parted
 
 TMP=$(mktemp -d)
 log "Creating image in $TMP..."
@@ -67,7 +68,7 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git less \
-    console-data console-common v86d locales
+    console-data console-common console-setup v86d locales
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
