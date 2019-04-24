@@ -175,7 +175,7 @@ imgfile() {
   log "Creating imagefile..."
   IMGFILE="$TMP/wyper.img"
   sudo mkdir -p $TMP/mnt/{usb,efi}
-  dd if=/dev/zero of="$IMGFILE" bs=1MB count=512
+  dd if=/dev/zero of="$IMGFILE" bs=1MB count=1024
   sudo losetup -Pf "$IMGFILE"
   disk=$(losetup | grep "$IMGFILE" | awk '{print $1}')
 
