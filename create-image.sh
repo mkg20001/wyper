@@ -66,7 +66,7 @@ apt-get install -y --no-install-recommends \
     linux-image-generic \
     live-boot \
     systemd-sysv \
-    git \
+    git less \
     console-data console-common v86d locales
 
 locale-gen en_US.UTF-8
