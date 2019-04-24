@@ -22,7 +22,8 @@ sudo apt-get install -y \
     grub-efi-amd64-bin \
     mtools \
     dosfstools \
-    parted
+    parted \
+    gdisk
 
 TMP=$(mktemp -d)
 log "Creating image in $TMP..."
