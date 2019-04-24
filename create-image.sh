@@ -207,12 +207,12 @@ h     # recompute CHS values in protective/hybrid MBR
 w     # write table to disk and exit
 Y     # confirm changes
 EOF
-  sudo mkfs.vfat -F32 ${disk}2 && \
-  sudo mkfs.vfat -F32 ${disk}3
+  sudo mkfs.vfat -F32 ${disk}p2 && \
+  sudo mkfs.vfat -F32 ${disk}p3
 
   log "Setting up boot partitions..."
-  sudo mount ${disk}2 $TMP/mnt/efi && \
-  sudo mount ${disk}3 $TMP/mnt/usb
+  sudo mount ${disk}p2 $TMP/mnt/efi && \
+  sudo mount ${disk}p3 $TMP/mnt/usb
 
   sudo grub-install \
     --target=x86_64-efi \
