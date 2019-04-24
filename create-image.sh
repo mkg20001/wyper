@@ -234,7 +234,7 @@ EOF
   sudo cp \
     $TMP/scratch/grub.cfg \
     $TMP/mnt/usb/boot/grub/grub.cfg
-  sudo mkdir /mnt/usb/wyper_storage
+  sudo mkdir $TMP/mnt/usb/wyper_storage
 
   log "Successfully created $SRC/wyper.img!"
   sudo umount "$TMP/mnt/"*
