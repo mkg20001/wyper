@@ -28,6 +28,10 @@ log "Creating image in $TMP..."
 sudo mount -t tmpfs -o size=2048m /dev/null $TMP
 mount | grep "$TMP"
 function finish {
+  if [ ! -z "$disk" ]; then
+    umount "$TMP/mnt/"*
+    losetup -d "$disk"
+  fi
   sudo umount "$TMP"
   rm -rf "$TMP"
 }
@@ -63,14 +67,15 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git \
-    console-data v86d locales sudo
+    console-data console-common v86d locales
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
 
 if [ ! -z "$DEBUG" ]; then
+  apt-get install -y sudo network-manager net-tools wireless-tools
   yes | adduser user || /bin/true
-  echo 'user:somepw' | chpasswd 
+  echo 'user:somepw' | chpasswd
   addgroup user sudo
 fi
 
@@ -108,58 +113,145 @@ EOF
 
 touch ${TMP}/image/WYPER
 
-grub-mkstandalone \
-    --format=x86_64-efi \
-    --output=${TMP}/scratch/bootx64.efi \
-    --locales="" \
-    --fonts="" \
-    "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
+isofile() {
+  grub-mkstandalone \
+      --format=x86_64-efi \
+      --output=${TMP}/scratch/bootx64.efi \
+      --locales="" \
+      --fonts="" \
+      "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
 
-(cd ${TMP}/scratch && \
-    dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
-    mkfs.vfat efiboot.img && \
-    mmd -i efiboot.img efi efi/boot && \
-    mcopy -i efiboot.img ./bootx64.efi ::efi/boot/
-)
+  (cd ${TMP}/scratch && \
+      dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
+      mkfs.vfat efiboot.img && \
+      mmd -i efiboot.img efi efi/boot && \
+      mcopy -i efiboot.img ./bootx64.efi ::efi/boot/
+  )
 
-grub-mkstandalone \
-    --format=i386-pc \
-    --output=${TMP}/scratch/core.img \
-    --install-modules="linux normal iso9660 biosdisk memdisk search tar ls" \
-    --modules="linux normal iso9660 biosdisk search" \
-    --locales="" \
-    --fonts="" \
-    "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
+  grub-mkstandalone \
+      --format=i386-pc \
+      --output=${TMP}/scratch/core.img \
+      --install-modules="linux normal iso9660 biosdisk memdisk search tar ls" \
+      --modules="linux normal iso9660 biosdisk search" \
+      --locales="" \
+      --fonts="" \
+      "boot/grub/grub.cfg=${TMP}/scratch/grub.cfg"
 
-cat \
-    /usr/lib/grub/i386-pc/cdboot.img \
-    ${TMP}/scratch/core.img \
-> ${TMP}/scratch/bios.img
+  cat \
+      /usr/lib/grub/i386-pc/cdboot.img \
+      ${TMP}/scratch/core.img \
+  > ${TMP}/scratch/bios.img
 
-log "Making iso..."
-sudo xorriso \
-    -as mkisofs \
-    -iso-level 3 \
-    -full-iso9660-filenames \
-    -volid "WYPER" \
-    -eltorito-boot \
-        boot/grub/bios.img \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        --eltorito-catalog boot/grub/boot.cat \
-    --grub2-boot-info \
-    --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
-    -eltorito-alt-boot \
-        -e EFI/efiboot.img \
-        -no-emul-boot \
-    -append_partition 2 0xef ${TMP}/scratch/efiboot.img \
-    -output "$SRC/wyper.iso" \
-    -graft-points \
-        "${TMP}/image" \
-        /boot/grub/bios.img=${TMP}/scratch/bios.img \
-        /EFI/efiboot.img=${TMP}/scratch/efiboot.img
+  log "Making iso..."
+  sudo xorriso \
+      -as mkisofs \
+      -iso-level 3 \
+      -full-iso9660-filenames \
+      -volid "WYPER" \
+      -eltorito-boot \
+          boot/grub/bios.img \
+          -no-emul-boot \
+          -boot-load-size 4 \
+          -boot-info-table \
+          --eltorito-catalog boot/grub/boot.cat \
+      --grub2-boot-info \
+      --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
+      -eltorito-alt-boot \
+          -e EFI/efiboot.img \
+          -no-emul-boot \
+      -append_partition 2 0xef ${TMP}/scratch/efiboot.img \
+      -output "$SRC/wyper.iso" \
+      -graft-points \
+          "${TMP}/image" \
+          /boot/grub/bios.img=${TMP}/scratch/bios.img \
+          /EFI/efiboot.img=${TMP}/scratch/efiboot.img
 
-log "Successfully created $SRC/wyper.iso!"
+  log "Successfully created $SRC/wyper.iso!"
 
-# Test it using qemu-system-x86_64 -m 1024 wyper.iso
+  # Test it using qemu-system-x86_64 -m 1024 wyper.iso
+}
+
+imgfile() {
+  log "Creating imagefile..."
+  IMGFILE="$TMP/wyper.img"
+  sudo mkdir -p $TMP/mnt/{usb,efi}
+  dd if=/dev/zero of="$IMGFILE" bs=1M count=512
+  losetup -Pf "$IMGFILE"
+  disk=$(losetup | grep "$IMGFILE" | awk '{print $1}')
+
+  log "Setting up partitions..."
+  sudo parted --script $disk \
+    mklabel gpt \
+    mkpart primary fat32 2048s 4095s \
+        name 1 BIOS \
+        set 1 bios_grub on \
+    mkpart ESP fat32 4096s 413695s \
+        name 2 EFI \
+        set 2 esp on \
+    mkpart primary fat32 413696s 100% \
+        name 3 LINUX \
+        set 3 msftdata on
+  sudo gdisk $disk << EOF
+r     # recovery and transformation options
+h     # make hybrid MBR
+1 2 3 # partition numbers for hybrid MBR
+N     # do not place EFI GPT (0xEE) partition first in MBR
+EF    # MBR hex code
+N     # do not set bootable flag
+EF    # MBR hex code
+N     # do not set bootable flag
+83    # MBR hex code
+Y     # set the bootable flag
+x     # extra functionality menu
+h     # recompute CHS values in protective/hybrid MBR
+w     # write table to disk and exit
+Y     # confirm changes
+EOF
+  sudo mkfs.vfat -F32 ${disk}2 && \
+  sudo mkfs.vfat -F32 ${disk}3
+
+  log "Setting up boot partitions..."
+  sudo mount ${disk}2 $TMP/mnt/efi && \
+  sudo mount ${disk}3 $TMP/mnt/usb
+
+  sudo grub-install \
+    --target=x86_64-efi \
+    --efi-directory=$TMP/mnt/efi \
+    --boot-directory=$TMP/mnt/usb/boot \
+    --removable \
+    --recheck
+
+  sudo grub-install \
+    --target=i386-pc \
+    --boot-directory=$TMP/mnt/usb/boot \
+    --recheck \
+    $disk
+
+  log "Copying data..."
+  sudo mkdir -p $TMP/mnt/usb/{boot/grub,live}
+  sudo cp -r $TMP/image/* $TMP/mnt/usb/
+  sudo cp \
+    $TMP/scratch/grub.cfg \
+    $TMP/mnt/usb/boot/grub/grub.cfg
+
+  log "Successfully created $SRC/wyper.img!"
+  umount "$TMP/mnt/"*
+  losetup -d "$disk"
+  cp "$IMGFILE" "$SRC/wyper.img"
+  disk=""
+
+  # Test it using qemu-system-x86_64 -m 1024 wyper.img
+}
+
+case "$1" in
+  iso)
+    isofile
+    ;;
+  img)
+    imgfile
+    ;;
+  "")
+    isofile
+    imgfile
+    ;;
+esac

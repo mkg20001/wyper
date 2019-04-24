@@ -5,6 +5,7 @@ build:
   artifacts:
     paths:
       - wyper.iso
+      - wyper.img
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
