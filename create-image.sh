@@ -25,7 +25,7 @@ sudo apt-get install -y \
 
 TMP=$(mktemp -d)
 log "Creating image in $TMP..."
-sudo mount -t tmpfs -o size=2048m /dev/null $TMP
+sudo mount -t tmpfs -o size=4096m /dev/null $TMP
 mount | grep "$TMP"
 function finish {
   if [ ! -z "$disk" ]; then
@@ -175,7 +175,7 @@ imgfile() {
   log "Creating imagefile..."
   IMGFILE="$TMP/wyper.img"
   sudo mkdir -p $TMP/mnt/{usb,efi}
-  dd if=/dev/zero of="$IMGFILE" bs=1M count=512
+  dd if=/dev/zero of="$IMGFILE" bs=1MB count=512
   losetup -Pf "$IMGFILE"
   disk=$(losetup | grep "$IMGFILE" | awk '{print $1}')
 
