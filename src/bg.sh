@@ -4,6 +4,9 @@ LAST_DISK_CHANGE=$(date +%s)
 
 detect_root_location() {
   ROOT_MNT=$(awk -v needle="/" '$2==needle {print $1}' /proc/mounts)
+  if [ "$ROOT_MNT" == "overlay" ]; then
+    ROOT_MNT=$(awk -v needle="/run/live/medium" '$2=needle {print $1}' /proc/mounts)
+  fi
   ROOT_DEV_NAME=$(lsblk -no pkname "$ROOT_MNT")
   ROOT_DEV="/dev/$ROOT_DEV_NAME"
 

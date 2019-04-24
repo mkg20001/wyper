@@ -63,10 +63,16 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git \
-    console-data v86d locales plymouth plymouth-themes
+    console-data v86d locales sudo
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
+
+if [ ! -z "$DEBUG" ]; then
+  yes | adduser user || /bin/true
+  echo 'user:somepw' | chpasswd 
+  addgroup user sudo
+fi
 
 apt-get clean
 cd /srv/wyper && bash prepare_machine.sh
