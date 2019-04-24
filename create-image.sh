@@ -29,8 +29,8 @@ sudo mount -t tmpfs -o size=4096m /dev/null $TMP
 mount | grep "$TMP"
 function finish {
   if [ ! -z "$disk" ]; then
-    umount "$TMP/mnt/"*
-    losetup -d "$disk"
+    sudo umount "$TMP/mnt/"*
+    sudo losetup -d "$disk"
   fi
   sudo umount "$TMP"
   rm -rf "$TMP"
@@ -176,7 +176,7 @@ imgfile() {
   IMGFILE="$TMP/wyper.img"
   sudo mkdir -p $TMP/mnt/{usb,efi}
   dd if=/dev/zero of="$IMGFILE" bs=1MB count=512
-  losetup -Pf "$IMGFILE"
+  sudo losetup -Pf "$IMGFILE"
   disk=$(losetup | grep "$IMGFILE" | awk '{print $1}')
 
   log "Setting up partitions..."
@@ -235,8 +235,8 @@ EOF
     $TMP/mnt/usb/boot/grub/grub.cfg
 
   log "Successfully created $SRC/wyper.img!"
-  umount "$TMP/mnt/"*
-  losetup -d "$disk"
+  sudo umount "$TMP/mnt/"*
+  sudo losetup -d "$disk"
   cp "$IMGFILE" "$SRC/wyper.img"
   disk=""
 
@@ -251,7 +251,7 @@ case "$1" in
     imgfile
     ;;
   "")
-    isofile
     imgfile
+    isofile
     ;;
 esac
