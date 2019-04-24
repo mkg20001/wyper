@@ -36,8 +36,6 @@ fi
 
 PSTATE="$STORAGE/state"
 TMP="/tmp/wyper"
-touch "$ALOG"
-ln -s "$ALOG" "$TMP/alog" # so tty can access it
 
 mkdir -p "$PSTATE"
 
@@ -106,6 +104,8 @@ echo "Loading..."
 if [ ! -e "$TMP" ]; then
   mkdir "$TMP"
   mount /dev/null -t tmpfs -o defaults,noatime,nosuid,nodev,noexec,mode=1777,size=16M "$TMP"
+  touch "$ALOG"
+  ln -s "$ALOG" "$TMP/alog" # so tty can access it
 fi
 
 mkdir -p "$STATE"
