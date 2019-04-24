@@ -4,7 +4,7 @@ LAST_DISK_CHANGE=$(date +%s)
 
 detect_root_location() {
   if [ -e /run/live/medium ]; then
-    log "Storing settings on drive..."
+    log "Storing settings on drive $ROOT_DEV..."
   elif [ -e /run/live/medium ] && [ ! -e /run/live/medium/wyper_storage ]; then
     log "*** LIVE CD DETECTED - NO CHANGES OR LOGS WILL BE SAVED ***"
   fi

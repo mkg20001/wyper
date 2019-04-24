@@ -107,10 +107,19 @@ set default="0"
 set timeout=30
 
 menuentry "Wyper" {
-    linux /vmlinuz boot=live splash nomodeset
+    linux /vmlinuz boot=live nomodeset autoconf=0 disable=1 disable_ipv6=1 disable_ipv4=1
     initrd /initrd.img
 }
 EOF
+
+if [ ! -z "$DEBUG" ]; then
+  cat <<'EOF' >>${TMP}/scratch/grub.cfg
+menuentry "Wyper Debug" {
+    linux /vmlinuz boot=live nomodeset debug
+    initrd /initrd.img
+}
+EOF
+fi
 
 touch ${TMP}/image/WYPER
 

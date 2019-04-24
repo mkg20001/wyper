@@ -79,7 +79,7 @@ act_config() {
   c_act a "toggle automatic wiping: $(get_toggle_display auto_wipe)" do_toggle auto_wipe act_config
   c_act l "hide logs: $(get_toggle_display hide_logs)" do_toggle hide_logs act_config
   c_act b "hide banner: $(get_toggle_display hide_banner)" do_toggle hide_banner act_config
-  c_act u "update" do_act_update
+#  c_act u "update" do_act_update
   c_act - "go back" act_main
   control_read
 }

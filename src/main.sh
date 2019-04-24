@@ -34,9 +34,10 @@ else
   ALOG="/var/log/wyper_audit"
 fi
 
-
 PSTATE="$STORAGE/state"
 TMP="/tmp/wyper"
+touch "$ALOG"
+ln -s "$ALOG" "$TMP/alog" # so tty can access it
 
 mkdir -p "$PSTATE"
 
