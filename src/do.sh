@@ -41,7 +41,11 @@ ch_badblocks() {
   BAFILE="$TMP/$DEV_NAME.badblocks"
   BALOG="$BAFILE.log"
   touch "$BALOG"
-  LC_ALL=C badblocks -w -s -t random -v -o "$BAFILE" "$DEV" >>"$BALOG" 2>>"$BALOG" & bbpid=$!
+  if [ "$DO_WIPE" ]; then
+    LC_ALL=C badblocks -w -s -t random -v -o "$BAFILE" "$DEV" >>"$BALOG" 2>>"$BALOG" & bbpid=$!
+  else
+    LC_ALL=C badblocks -s -v -o "$BAFILE" "$DEV" >>"$BALOG" 2>>"$BALOG" & bbpid=$!
+  fi
   while [ -e "/proc/$bbpid" ]; do
     CURSTATE=$(echo $(tail -n 1 "$BALOG" | sed "s|: .*||g"))
     CURPROG=$(cat "$BALOG" | fold -w 41 | tail -n 2 | head -n 1 | sed "s|[^0-9a-z/,:% .]||g" | sed "s|^ *||g" | sed "s| *$||g") # TODO: sometimes output shows as "s 0.0%....error", flip that
@@ -65,9 +69,10 @@ $CURPROG" > "$STATE/$dev/task.progress"
 
 do_disk_wipe() {
   echo -e "Starting wipe...\n" > "$STATE/$DEV_NAME/task.progress"
+  export DO_WIPE=1
 
   slog "Checking bad blocks on $DEV (1/4)..."
-  ch_badblocks
+  DO_WIPE=1 ch_badblocks
 
   slog "Wiping $DEV with 000000 (2/4)..."
   cat /dev/zero | dd_with_progress
@@ -84,7 +89,22 @@ do_disk_wipe() {
   LC_ALL=C date > "$STATE/$DEV_NAME/wiped_at"
 
   echo "Wiped '$(cat "$STATE/$DEV_NAME/display")' at $(LC_ALL=C date)" >> "$ALOG"
-  echo "Healthcheck result was: $BA_FINAL" >> "$ALOG"
+  echo "check result was: $BA_FINAL" >> "$ALOG"
+  cat "$BAFILE" | sed "s|^|[BADBLOCK] |g" >> "$ALOG"
+  rm "$BAFILE"*
+
+  dev="$DEV"
+  sync_state
+  check_task
+}
+
+do_disk_check() {
+  echo -e "Starting check...\n" > "$STATE/$DEV_NAME/task.progress"
+
+  slog "Checking bad blocks on $DEV..."
+  ch_badblocks
+
+  echo "check result for '$(cat "$STATE/$DEV_NAME/display")' at $(LC_ALL=C date) was: $BA_FINAL" >> "$ALOG"
   cat "$BAFILE" | sed "s|^|[BADBLOCK] |g" >> "$ALOG"
   rm "$BAFILE"*
 
@@ -110,6 +130,20 @@ do_act_wipe() {
   control_read
 }
 
+do_act_check() {
+  DEVID="$1"
+  DEV_NAME="$2"
+  dev="/dev/$DEV_NAME"
+  DEV="$dev"
+
+  if [ "$DEVID" == "." ]; then
+    do_disk_all_check
+  else
+    dev="$DEV"
+    schedule_task "$DEV_NAME" do_disk_check
+  fi
+}
+
 test_task() {
   log "Task test"
 }
@@ -123,6 +157,19 @@ do_disk_all_wipe() {
 
     if [ ! -e "$DEV_STATE/task" ] && [ ! -e "$DEV_STATE/wiped_at" ]; then
       schedule_task "$DEV_NAME" do_disk_wipe
+    fi
+  done
+}
+
+do_disk_all_check() {
+  for DEV_STATE in "$STATE/"*; do
+    DEVID=$(cat $DEV_STATE/id)
+    DEV_NAME=$(basename $DEV_STATE)
+    dev="/dev/$DEV_NAME"
+    DEV="$dev"
+
+    if [ ! -e "$DEV_STATE/task" ] && [ ! -e "$DEV_STATE/wiped_at" ]; then
+      schedule_task "$DEV_NAME" do_disk_check
     fi
   done
 }

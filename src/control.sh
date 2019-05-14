@@ -65,7 +65,7 @@ act_main() {
   control_reset "Wyper v0.1.0"
   c_act c "configuration" act_config
   c_act w "wipe and check for bad blocks" act_wipe
-  # c_act h "health check" act_health
+  c_act h "health check" act_health
   c_act a "automatic shutdown: $(get_toggle_display auto_shutdown)" do_toggle auto_shutdown act_main
   # c_act e "exit" act_exit
   control_read
