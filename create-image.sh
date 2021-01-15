@@ -45,7 +45,7 @@ log "Bootstraping ubuntu base system..."
 sudo debootstrap \
     --arch=amd64 \
     --variant=minbase \
-    disco \
+    groovy \
     "${TMP}/chroot" \
     http://archive.ubuntu.com/ubuntu/
 
@@ -69,7 +69,7 @@ apt-get install -y --no-install-recommends \
     live-boot \
     systemd-sysv \
     git less \
-    console-data console-common console-setup v86d locales
+    console-data console-setup v86d locales
 
 locale-gen en_US.UTF-8
 update-locale en_US.UTF-8
